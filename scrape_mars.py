@@ -38,13 +38,35 @@ def scrape():
     browser.visit(url2)
     mars_table = pd.read_html(url2)
     mars_table = mars_table[0]
-    mars_table.columns = mars_table.iloc[0]
-    mars_table = mars_table[1:]
-    mars_table.to_html('table.html')
+    mars_table = mars_table.drop(labels=0, axis=0)
+    #mars_table.columns = mars_table.iloc[0]
+    #mars_table = mars_table[1:]
 
-    mars_dict['table'] = mars_table
+    mars_table_out = mars_table.to_html('table.html')
+
+    mars_dict['table'] = mars_table_out
 
     #scrape for mars hemisphere photos
+    url3 = 'https://marshemispheres.com/'
+    browser.visit(url3)
+    html = browser.html
+    soup = bs(html, 'html.parser')
+    photos = soup.find('div', class_='result-list')
+    hemispheres = photos.find_all("div", class_="description")
+    image_list = []
+    for hemis in hemispheres:
+        image_dict = {}
+        image_title = hemis.h3.text
+        image_dict['title'] = image_title
+        nav = hemis.find('a', class_="itemLink product-item")['href']    
+        browser.visit(f"https://marshemispheres.com/{nav}")
+        original = browser.find_by_text('Sample')['href']
+        image_dict['img_url'] = url + original
+        image_list.append(image_dict)
+
+    mars_dict['hemispheres'] = image_list
+
+
     # Quit the browser
     browser.quit()
 
